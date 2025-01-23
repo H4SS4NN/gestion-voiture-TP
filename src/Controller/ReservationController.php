@@ -54,11 +54,15 @@ final class ReservationController extends AbstractController
                 $this->addFlash('error', 'Ce véhicule est déjà réservé.');
                 return $this->redirectToRoute('app_reservation_new');
             }
-    
-            // Marquer le véhicule comme indisponible
             // Calcul du prix total
             $days = $reservation->getEndDate()->diff($reservation->getStartDate())->days;
             $totalPrice = $days * $vehicle->getPricePerDay();
+            
+            // Appliquer une remise de 10% si le prix dépasse 400 euros
+            if ($totalPrice > 400) {
+                $totalPrice *= 0.9;
+            }
+            
             $reservation->setTotalPrice($totalPrice);
     
             $entityManager->persist($reservation);

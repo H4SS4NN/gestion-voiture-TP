@@ -88,7 +88,6 @@ final class VehicleController extends AbstractController
         ]);
     }
     
-
     #[Route('/{id}/edit', name: 'app_vehicle_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Vehicle $vehicle, EntityManagerInterface $entityManager): Response
     {
@@ -110,12 +109,20 @@ final class VehicleController extends AbstractController
     #[Route('/{id}', name: 'app_vehicle_delete', methods: ['POST'])]
     public function delete(Request $request, Vehicle $vehicle, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$vehicle->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($vehicle);
-            $entityManager->flush();
+        if ($this->isCsrfTokenValid('delete'.$vehicle->getId(), $request->get('_token'))) {
+            try {
+                $entityManager->remove($vehicle);
+                $entityManager->flush();
+                $this->addFlash('success', 'Véhicule supprimé avec succès.');
+                return $this->redirectToRoute('app_vehicle_index', [], Response::HTTP_SEE_OTHER);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Une erreur est survenue lors de la suppression du véhicule.');
+                return $this->redirectToRoute('app_vehicle_index', [], Response::HTTP_SEE_OTHER);
+            }   
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
         }
-
-        return $this->redirectToRoute('app_vehicle_index', [], Response::HTTP_SEE_OTHER);
+        
+       
     }
-    
 }

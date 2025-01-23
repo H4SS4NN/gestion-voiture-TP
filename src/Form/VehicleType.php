@@ -10,6 +10,7 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Range;
 
 class VehicleType extends AbstractType
 {
@@ -54,6 +55,13 @@ class VehicleType extends AbstractType
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Ex: 50',
+                ],
+                'constraints' => [
+                    new Range([
+                        'min' => 20,
+                        'max' => 50,
+                        'notInRangeMessage' => 'Le prix doit être compris entre {{ min }} et {{ max }} euros.',
+                    ]),
                 ],
             ])
             ->add('availability', ChoiceType::class, [

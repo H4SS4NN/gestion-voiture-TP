@@ -6,6 +6,26 @@
 <div class="container mt-5">
     <h1 class="mb-4">Liste des véhicules</h1>
 
+    {% if is_granted('ROLE_ADMIN') %}
+        <div class="mb-4">
+            <a href="{{ path('app_vehicle_new') }}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Ajouter un véhicule
+            </a>
+        </div>
+    {% endif %}
+
+    
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+
     <!-- Formulaire de recherche -->
     <div class="mb-4">
         <form method="get" action="{{ path('app_vehicle_index') }}" class="row g-3">
