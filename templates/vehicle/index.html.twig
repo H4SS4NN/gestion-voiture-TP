@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des véhicules{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4">Liste des véhicules</h1>
+
+    <!-- Formulaire de recherche -->
+    <div class="mb-4">
+        <form method="get" action="{{ path('app_vehicle_index') }}" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="marque" value="{{ app.request.get('marque') }}" class="form-control" placeholder="Rechercher par marque">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="model" value="{{ app.request.get('model') }}" class="form-control" placeholder="Rechercher par modèle">
+            </div>
+            <div class="col-md-3">
+                <select name="availability" class="form-select">
+                    <option value="">Disponibilité</option>
+                    <option value="1" {{ app.request.get('availability') == '1' ? 'selected' : '' }}>Disponible</option>
+                    <option value="0" {{ app.request.get('availability') == '0' ? 'selected' : '' }}>Indisponible</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Rechercher
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des véhicules sous forme de cartes -->
+    <div class="row">
+        {% for vehicle in vehicles %}
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <img src="https://get-picto.com/wp-content/uploads/2023/02/icon-voiture-gratuit.webp"  class="img-fluid mb-3 w-25" alt="{{ vehicle.marque }} {{ vehicle.model }}">
+                        <h5 class="card-title">{{ vehicle.marque }} {{ vehicle.model }}</h5>
+                        <p class="card-text">
+                            <strong>Type :</strong> {{ vehicle.type }}<br>
+                            <strong>Immatriculation :</strong> {{ vehicle.registration }}<br>
+                            <strong>Prix par jour :</strong> {{ vehicle.pricePerDay }} €<br>
+                            <strong>Disponibilité :</strong> 
+                            <span class="badge {{ vehicle.availability ? 'bg-success' : 'bg-danger' }}">
+                                {{ vehicle.availability ? 'Disponible' : 'Indisponible' }}
+                            </span>
+                        </p>
+                        <div class="d-flex justify-content-between">
+                            <!-- Bouton Voir accessible à tous -->
+                            <a href="{{ path('app_vehicle_show', {'id': vehicle.id}) }}" class="btn btn-info btn-sm">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+
+                            {% if is_granted('ROLE_USER') %}
+
+                                {% if vehicle.availability %}
+                                <a href="{{ path('app_reservation_add', {'vehicle_id': vehicle.id}) }}" 
+                                   class="btn btn-primary btn-sm" 
+                                   {% if not vehicle.availability %}disabled{% endif %}>
+                                    Réserver
+                                </a>
+                                {% endif %}
+                            {% else %}
+                                <a href="{{ path('app_login') }}" 
+                                   class="btn btn-secondary btn-sm" 
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top" 
+                                   title="Vous devez vous connecter pour réserver">
+                                    Réserver
+                                </a>
+                            {% endif %}
+
+                            <!-- Boutons Modifier visibles uniquement pour les administrateurs -->
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <a href="{{ path('app_vehicle_edit', {'id': vehicle.id}) }}" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-pencil"></i> Modifier
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p class="text-center">Aucun véhicule trouvé.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

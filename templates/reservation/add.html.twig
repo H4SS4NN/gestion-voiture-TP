@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réserver un véhicule{% endblock %}
+
+{% block body %}
+<div id="unavailable-dates" data-unavailable="{{ unavailableDates|json_encode }}"></div>
+ {% for label, messages in app.flashes %}
+        <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+<div class="container mt-5">
+    <h1 class="mb-4">Réserver le véhicule : {{ vehicle.marque }} {{ vehicle.model }}</h1>
+    <div class="card shadow-sm p-4">
+        {{ form_start(form) }}
+        {{ form_widget(form) }}
+        <button class="btn btn-primary mt-3" type="submit">Confirmer la réservation</button>
+        {{ form_end(form) }}
+    </div>
+    <a href="{{ path('app_vehicle_index') }}" class="btn btn-secondary mt-3">Retour à la liste</a>
+</div>
+{% endblock %}
+

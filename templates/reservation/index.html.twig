@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Index des Réservations{% endblock %}
+
+{% block body %}
+
+        {% for label, messages in app.flashes %}
+        <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+
+    <div class="container mt-5">
+        <h1 class="mb-4">Index des Réservations</h1>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Véhicule</th>
+                    <th>Date de début</th>
+                    <th>Date de fin</th>
+                    <th>Prix total</th>
+                    <th>Statut</th>
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <th>Utilisateur</th>
+                    {% endif %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                    <tr>
+                        <td>{{ reservation.vehicle ? reservation.vehicle.model : 'Véhicule inconnu' }}</td>
+                        <td>{{ reservation.startDate ? reservation.startDate|date('d-m-Y H:i:s') : 'N/A' }}</td>
+                        <td>{{ reservation.endDate ? reservation.endDate|date('d-m-Y H:i:s') : 'N/A' }}</td>
+                        <td>{{ reservation.totalPrice }}  €  </td>
+                        <td>{{ reservation.status }}</td>
+                        {% if is_granted('ROLE_ADMIN') %}
+                        <td>{{ reservation.user ? reservation.user.nom : 'N/A' }}</td>
+                        {% endif %}
+                        <td>
+                            <a href="{{ path('app_reservation_show', {'id': reservation.id}) }}" class="btn btn-info btn-sm">Afficher</a>
+                            {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}" class="btn btn-warning btn-sm">Modifier</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="{% if is_granted('ROLE_ADMIN') %}7{% else %}6{% endif %}" class="text-center">
+                            Aucun enregistrement trouvé
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if is_granted('ROLE_ADMIN') %}
+        <a href="{{ path('app_reservation_new') }}" class="btn btn-success mt-3">Créer nouveau</a>
+        {% endif %}
+    </div>
+{% endblock %}

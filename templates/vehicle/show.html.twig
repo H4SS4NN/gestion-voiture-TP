@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vehicle{% endblock %}
+
+{% block body %}
+    <h1>Vehicle</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ vehicle.id }}</td>
+            </tr>
+            <tr>
+                <th>Marque</th>
+                <td>{{ vehicle.marque }}</td>
+            </tr>
+            <tr>
+                <th>Model</th>
+                <td>{{ vehicle.model }}</td>
+            </tr>
+            <tr>
+                <th>Type</th>
+                <td>{{ vehicle.type }}</td>
+            </tr>
+            <tr>
+                <th>Registration</th>
+                <td>{{ vehicle.registration }}</td>
+            </tr>
+            <tr>
+                <th>Price_per_day</th>
+                <td>{{ vehicle.pricePerDay }}</td>
+            </tr>
+            <tr>
+                <th>Availability</th>
+                <td>{{ vehicle.availability ? 'Yes' : 'No' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+<h2>Commentaires</h2>
+
+{% for comment in vehicle.comments %}
+    <div class="mb-3">
+        <strong>{{ comment.user.prenom }} {{ comment.user.nom }}</strong>
+        <p>{{ comment.content }}</p>
+        <small>Posté le {{ comment.createdAt|date('d/m/Y H:i') }}</small>
+
+        <!-- Bouton de suppression, visible uniquement pour l'auteur ou un admin -->
+     
+   {% if app.user == comment.user or is_granted('ROLE_ADMIN') %}
+      
+            <form method="post" action="{{ path('app_comment_delete', {'id': comment.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ comment.id) }}">
+                <button class="btn btn-danger btn-sm">
+                    <i class="bi bi-trash"></i> Supprimer
+                </button>
+            </form>
+        {% endif %}
+    </div>
+{% else %}
+    <p>Aucun commentaire pour ce véhicule.</p>
+
+{% endfor %}
+
+        {% if hasReservation %}
+    <a href="{{ path('app_comment_new', {'vehicle_id': vehicle.id}) }}" class="btn btn-primary">
+        Ajouter un commentaire
+    </a>
+{% else %}
+    <p class="text-muted">Vous devez réserver ce véhicule avant de pouvoir ajouter un commentaire.</p>
+{% endif %}
+<!-- Formulaire d'ajout de commentaire -->
+
+    <!-- Bouton Retour -->
+    <a class="btn btn-dark" href="{{ path('app_vehicle_index') }}">back to list</a>
+{% endblock %}
