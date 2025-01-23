@@ -65,6 +65,11 @@
                             <strong>Disponibilité :</strong> 
                             <span class="badge {{ vehicle.availability ? 'bg-success' : 'bg-danger' }}">
                                 {{ vehicle.availability ? 'Disponible' : 'Indisponible' }}
+                                {% if not vehicle.availability and vehicle.currentReservationEndDate %}
+                                Jusqu'au {{ vehicle.currentReservationEndDate|date('d/m/Y') }}
+                {% else %}
+                    
+                {% endif %}
                             </span>
                         </p>
                         <div class="d-flex justify-content-between">
@@ -75,13 +80,12 @@
 
                             {% if is_granted('ROLE_USER') %}
 
-                                {% if vehicle.availability %}
+                              
                                 <a href="{{ path('app_reservation_add', {'vehicle_id': vehicle.id}) }}" 
-                                   class="btn btn-primary btn-sm" 
-                                   {% if not vehicle.availability %}disabled{% endif %}>
+                                   class="btn btn-primary btn-sm">
                                     Réserver
                                 </a>
-                                {% endif %}
+                               
                             {% else %}
                                 <a href="{{ path('app_login') }}" 
                                    class="btn btn-secondary btn-sm" 

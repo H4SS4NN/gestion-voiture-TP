@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class VehicleController extends AbstractController
 {
     #[Route(name: 'app_vehicle_index', methods: ['GET'])]
-    public function index(Request $request, VehicleRepository $vehicleRepository): Response
+    public function index(Request $request, VehicleRepository $vehicleRepository, EntityManagerInterface $entityManager): Response
     {
         $criteria = [];
     
@@ -33,6 +33,27 @@ final class VehicleController extends AbstractController
         }
     
         $vehicles = $vehicleRepository->findBy($criteria);
+    
+        // Vérifie la disponibilité actuelle des véhicules
+        foreach ($vehicles as $vehicle) {
+            $reservations = $entityManager->getRepository(Reservation::class)
+                ->findBy(['vehicle' => $vehicle]);
+    
+            $isAvailable = true;
+            $endDate = null;
+    
+            foreach ($reservations as $reservation) {
+                $now = new \DateTimeImmutable();
+                if ($reservation->getStartDate() <= $now && $reservation->getEndDate() >= $now) {
+                    $isAvailable = false;
+                    $endDate = $reservation->getEndDate();
+                    break;
+                }
+            }
+    
+            $vehicle->setAvailability($isAvailable);
+            $vehicle->currentReservationEndDate = $endDate; 
+        }
     
         return $this->render('vehicle/index.html.twig', [
             'vehicles' => $vehicles,
@@ -93,6 +114,20 @@ final class VehicleController extends AbstractController
     {
         $form = $this->createForm(VehicleType::class, $vehicle);
         $form->handleRequest($request);
+
+        $reservations = $entityManager->getRepository(Reservation::class)
+            ->findBy(['vehicle' => $vehicle]);
+        foreach ($reservations as $reservation) {
+            $now = new \DateTimeImmutable();
+            if ($reservation->getStartDate() <= $now && $reservation->getEndDate() >= $now) {
+                $vehicle->setAvailability(false);
+                break;
+            }
+        }
+
+        if (!$vehicle->isAvailability()) {
+            $form->remove('availability');
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
