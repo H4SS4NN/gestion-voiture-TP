@@ -76,9 +76,12 @@ class VehicleType extends AbstractType
                 ],
             ])
             ->add('image', FileType::class, [
-                'label' => 'Image du véhicule',
-                'mapped' => false,
-                'required' => false,
+                'label' => 'Image',
+                'mapped' => false, // Ne pas lier ce champ à une propriété de l'entité
+                'required' => false, // Le champ n'est pas obligatoire
+                'attr' => [
+                    'class' => 'form-control',
+                ],
             ]);
     }
 

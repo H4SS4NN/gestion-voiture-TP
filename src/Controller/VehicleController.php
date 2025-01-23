@@ -19,7 +19,7 @@ final class VehicleController extends AbstractController
     public function index(Request $request, VehicleRepository $vehicleRepository, EntityManagerInterface $entityManager): Response
     {
         $criteria = [];
-    
+        
         if ($marque = $request->query->get('marque')) {
             $criteria['marque'] = $marque;
         }
@@ -33,32 +33,34 @@ final class VehicleController extends AbstractController
         }
     
         $vehicles = $vehicleRepository->findBy($criteria);
-    
-        // Vérifie la disponibilité actuelle des véhicules
         foreach ($vehicles as $vehicle) {
             $reservations = $entityManager->getRepository(Reservation::class)
                 ->findBy(['vehicle' => $vehicle]);
     
-            $isAvailable = true;
+            $isCurrentlyReserved = false;
             $endDate = null;
     
             foreach ($reservations as $reservation) {
                 $now = new \DateTimeImmutable();
                 if ($reservation->getStartDate() <= $now && $reservation->getEndDate() >= $now) {
-                    $isAvailable = false;
+                    $isCurrentlyReserved = true;
                     $endDate = $reservation->getEndDate();
                     break;
                 }
             }
-    
-            $vehicle->setAvailability($isAvailable);
-            $vehicle->currentReservationEndDate = $endDate; 
+            if (!$vehicle->isAvailability() || $isCurrentlyReserved) {
+                $vehicle->setAvailability(false);
+            } else {
+                $vehicle->setAvailability(true);
+            }
+            $vehicle->currentReservationEndDate = $endDate;
         }
     
         return $this->render('vehicle/index.html.twig', [
             'vehicles' => $vehicles,
         ]);
     }
+    
     
 
     #[Route('/new', name: 'app_vehicle_new', methods: ['GET', 'POST'])]
@@ -112,34 +114,47 @@ final class VehicleController extends AbstractController
     #[Route('/{id}/edit', name: 'app_vehicle_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Vehicle $vehicle, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->createForm(VehicleType::class, $vehicle);
-        $form->handleRequest($request);
-
+        // Vérifier les réservations pour déterminer la disponibilité
         $reservations = $entityManager->getRepository(Reservation::class)
             ->findBy(['vehicle' => $vehicle]);
+    
+        $isReserved = false;
+    
         foreach ($reservations as $reservation) {
             $now = new \DateTimeImmutable();
             if ($reservation->getStartDate() <= $now && $reservation->getEndDate() >= $now) {
-                $vehicle->setAvailability(false);
+                $vehicle->setAvailability(false); // Marquer comme indisponible
+                $isReserved = true;
                 break;
             }
         }
-
-        if (!$vehicle->isAvailability()) {
+    
+        // Créer le formulaire
+        $form = $this->createForm(VehicleType::class, $vehicle);
+    
+        // Si le véhicule est réservé, supprimer la possibilité de modifier 'availability'
+        if ($isReserved) {
             $form->remove('availability');
         }
 
+
+        $form->remove('image');
+    
+        $form->handleRequest($request);
+    
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
-
+    
+            $this->addFlash('success', 'Le véhicule a été modifié avec succès.');
             return $this->redirectToRoute('app_vehicle_index', [], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('vehicle/edit.html.twig', [
             'vehicle' => $vehicle,
             'form' => $form,
         ]);
     }
+    
 
     #[Route('/{id}', name: 'app_vehicle_delete', methods: ['POST'])]
     public function delete(Request $request, Vehicle $vehicle, EntityManagerInterface $entityManager): Response
